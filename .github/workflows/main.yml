@@ -22,6 +22,71 @@ jobs:
       - uses: pre-commit/action@v2.0.0
         with:
           extra_args: --verbose --all-files
+  kitchen:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        instance:
+          - default-debian-10-tiamat-py3
+          # - default-debian-9-tiamat-py3
+          - default-ubuntu-2004-tiamat-py3
+          # - default-ubuntu-1804-tiamat-py3
+          # - default-ubuntu-1604-tiamat-py3
+          - default-centos-8-tiamat-py3
+          # - default-centos-7-tiamat-py3
+          - default-amazonlinux-2-tiamat-py3
+          - default-oraclelinux-8-tiamat-py3
+          # - default-oraclelinux-7-tiamat-py3
+          # - default-debian-10-master-py3
+          # - default-ubuntu-2004-master-py3
+          # - default-ubuntu-1804-master-py3
+          # - default-centos-8-master-py3
+          - default-fedora-32-master-py3
+          # - default-fedora-31-master-py3
+          - default-opensuse-leap-152-master-py3
+          # - default-amazonlinux-2-master-py3
+          # - default-debian-10-3001-py3
+          # - default-debian-9-3001-py3
+          # - default-ubuntu-2004-3001-py3
+          # - default-ubuntu-1804-3001-py3
+          # - default-centos-8-3001-py3
+          # - default-centos-7-3001-py3
+          # - default-fedora-32-3001-py3
+          # - default-fedora-31-3001-py3
+          # - default-opensuse-leap-152-3001-py3
+          # - default-amazonlinux-2-3001-py3
+          # - default-oraclelinux-8-3001-py3
+          # - default-oraclelinux-7-3001-py3
+          # - default-debian-10-3000-3-py3
+          # - default-debian-9-3000-3-py3
+          # - default-ubuntu-1804-3000-3-py3
+          # - default-centos-8-3000-3-py3
+          # - default-centos-7-3000-3-py3
+          # - default-fedora-31-3000-3-py3
+          # - default-opensuse-leap-152-3000-3-py3
+          # - default-amazonlinux-2-3000-3-py3
+          # - default-ubuntu-1804-3000-3-py2
+          # - default-ubuntu-1604-3000-3-py2
+          - default-arch-base-latest-3000-3-py2
+          - upstart-centos-6-2019-2-py2
+          - upstart-amazonlinux-1-2019-2-py2
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+      - run: sudo gem install bundler --quiet --no-document
+      - name: Bundle install
+        run: |
+          bundle config path vendor/bundle
+          bundle install --jobs 4 --retry 3
+      - run: bundle exec kitchen verify ${{ matrix.instance }}
+        env:
+          CHEF_LICENSE: accept-no-persist
   release:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: [commitlint, pre-commit]
